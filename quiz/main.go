@@ -7,25 +7,12 @@ import (
 	"io"
 	"log"
 	"os"
-	"strconv"
+	"strings"
 )
 
 type Question struct {
 	question string
-	answer   int
-}
-
-type Quiz struct {
-	questions []Question
-}
-
-func parseQuestion(record []string) (Question, error) {
-	question := record[0]
-	answer, err := strconv.Atoi(record[1])
-	if err != nil {
-		return Question{}, err
-	}
-	return Question{question: question, answer: answer}, nil
+	answer   string
 }
 
 func loadQuestions(file *os.File) ([]Question, error) {
@@ -41,23 +28,19 @@ func loadQuestions(file *os.File) ([]Question, error) {
 		if err != nil {
 			return nil, err
 		}
-		question, err := parseQuestion(row)
-		if err != nil {
-			return nil, err
-		}
-		questions = append(questions, question)
+		questions = append(questions, Question{row[0], row[1]})
 	}
 
 	return questions, nil
 }
 
-func answerQuestion() (int, error) {
+func answerQuestion() string {
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Please enter your answer")
 	if scanner.Scan() {
-		return strconv.Atoi(scanner.Text())
+		return strings.Trim(scanner.Text(), " ")
 	} else {
-		return 0, fmt.Errorf("Failed to read input")
+		return ""
 	}
 }
 
@@ -65,7 +48,7 @@ func main() {
 
 	fmt.Println(os.Getwd())
 
-	f, err := os.Open("quiz/problems.csv") // replace with your file path
+	f, err := os.Open("quiz/p2.csv") // replace with your file path
 	if err != nil {
 		log.Fatalf("failed to open file: %v", err)
 	}
@@ -73,24 +56,24 @@ func main() {
 
 	questions, err := loadQuestions(f)
 
+	if err != nil {
+		log.Fatalf("failed to load questions: %v", err)
+	}
+
+	var correct int
+
 	for _, q := range questions {
 		fmt.Println("Question: ", q.question)
-		answer, err := answerQuestion()
-		if err != nil {
-			log.Fatalf("failed to answer question: %v", err)
-		}
+		answer := answerQuestion()
+
 		if answer == q.answer {
+			correct += 1
 			fmt.Println("Correct!")
 		} else {
 			fmt.Println("Incorrect!")
 		}
 	}
 
-}
+	fmt.Printf("You got %d correct out of %d\n", correct, len(questions))
 
-//func main() {
-//	nums := []int{10, 20, 30}
-//	for index, value := range nums {
-//		fmt.Println(index, value)
-//	}
-//}
+}
