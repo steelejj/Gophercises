@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 type Question struct {
@@ -44,10 +45,14 @@ func answerQuestion() string {
 	}
 }
 
-func main() {
+func runTimer(numSeconds int) {
+	timer := time.NewTimer(time.Duration(numSeconds))
+	<-timer.C
 
-	fmt.Println(os.Getwd())
+	fmt.Println("Timer has expired")
+}
 
+func runGame() {
 	f, err := os.Open("quiz/p2.csv") // replace with your file path
 	if err != nil {
 		log.Fatalf("failed to open file: %v", err)
@@ -75,5 +80,9 @@ func main() {
 	}
 
 	fmt.Printf("You got %d correct out of %d\n", correct, len(questions))
+}
+
+func main() {
+	runTimer(15)
 
 }
