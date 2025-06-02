@@ -52,37 +52,58 @@ func runTimer(numSeconds int) {
 	fmt.Println("Timer has expired")
 }
 
-func runGame() {
-	f, err := os.Open("quiz/p2.csv") // replace with your file path
+func main() {
+	file, err := os.Open("quiz/problems.csv")
 	if err != nil {
-		log.Fatalf("failed to open file: %v", err)
+		log.Fatal(err)
 	}
-	defer f.Close()
+	defer file.Close()
 
-	questions, err := loadQuestions(f)
+	reader := csv.NewReader(file)
+	var responses []string
 
-	if err != nil {
-		log.Fatalf("failed to load questions: %v", err)
-	}
+	// Create channels for timer and input
+	timeUp := make(chan bool)
+	inputChan := make(chan string)
 
-	var correct int
+	// Start the timer
+	go func() {
+		time.Sleep(30 * time.Second)
+		timeUp <- true
+	}()
 
-	for _, q := range questions {
-		fmt.Println("Question: ", q.question)
-		answer := answerQuestion()
+	// Main game loop
+	for r, err := reader.Read(); err == nil; r, err = reader.Read() {
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		if answer == q.answer {
-			correct += 1
-			fmt.Println("Correct!")
-		} else {
-			fmt.Println("Incorrect!")
+		fmt.Println(r[0])
+
+		// Start goroutine to get user input
+		go func() {
+			var answer string
+			fmt.Scanln(&answer)
+			inputChan <- answer
+		}()
+
+		// Wait for either timer or input
+		select {
+		case <-timeUp:
+			fmt.Println("\nTime's up!")
+			fmt.Println("Final score:", responses)
+			return
+		case answer := <-inputChan:
+			if answer == r[1] {
+				responses = append(responses, "correct")
+			} else {
+				responses = append(responses, "incorrect")
+			}
 		}
 	}
 
-	fmt.Printf("You got %d correct out of %d\n", correct, len(questions))
-}
-
-func main() {
-	runTimer(15)
-
+	fmt.Println(responses)
 }
