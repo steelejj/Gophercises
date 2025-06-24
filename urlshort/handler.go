@@ -1,7 +1,7 @@
-
 package urlshort
 
 import (
+	"log/slog"
 	"net/http"
 )
 
@@ -13,7 +13,17 @@ import (
 // http.Handler will be called instead.
 func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
 	//	TODO: Implement this...
-	return nil
+	slog.Info("running map handling: ", slog.Any("paths", pathsToUrls))
+	return func(w http.ResponseWriter, r *http.Request) {
+		slog.Info(r.URL.Path)
+		targetPath, ok := pathsToUrls[r.URL.Path]
+		if ok {
+			http.Redirect(w, r, targetPath, 301) // todo - this should really be a constant
+		} else {
+			fallback.ServeHTTP(w, r)
+		}
+		return
+	}
 }
 
 // YAMLHandler will parse the provided YAML and then return
@@ -32,7 +42,7 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 //
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
-func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	// TODO: Implement this...
-	return nil, nil
-}
+// func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
+// 	// TODO: Implement this...
+// 	return nil, nil
+// }
