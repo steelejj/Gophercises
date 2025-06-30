@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"Gophercises/urlshort"
 )
@@ -19,13 +20,12 @@ func main() {
 
 	// Build the YAMLHandler using the mapHandler as the
 	// fallback
-	yaml := `
-- path: /urlshort
-  url: https://github.com/gophercises/urlshort
-- path: /urlshort-final
-  url: https://github.com/gophercises/urlshort/tree/solution
-`
-	yamlHandler, err := urlshort.YAMLHandler([]byte(yaml), mapHandler)
+	yamlContent, err := os.ReadFile("urlshort/resources/redirects.yml")
+	if err != nil {
+		panic(err)
+	}
+
+	yamlHandler, err := urlshort.YAMLHandler(yamlContent, mapHandler)
 	if err != nil {
 		panic(err)
 	}
